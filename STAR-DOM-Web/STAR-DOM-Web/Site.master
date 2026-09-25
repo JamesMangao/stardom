@@ -1,0 +1,222 @@
+<%@ Master Language="VB" CodeBehind="Site.master.vb" Inherits="STAR_DOM.Web.SiteMaster" %>
+<!DOCTYPE html>
+<html lang="en">
+<head runat="server">
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>STAR:DOM — Artisan &amp; Pop-up Hub</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&amp;family=Plus+Jakarta+Sans:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,500..700,0..1,-50..200&amp;display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/css/site.css" />
+    <link rel="icon" type="image/png" href="/Assets/stardom-logo.PNG" />
+    <link rel="apple-touch-icon" href="/Assets/stardom-logo.PNG" />
+</head>
+<body>
+    <form id="shell" runat="server" autocomplete="off">
+    <header class="topbar">
+        <div class="topbar-inner">
+            <a class="brand" href="/App/Marketplace.aspx">
+                <img class="brand-img" src="/Assets/stardom-logo.PNG" alt="STAR:DOM logo" />
+                <span class="brand-txt">
+                    <span class="brand-logo">STAR:DOM<span class="brand-dot"></span></span>
+                    <span class="brand-sub">ARTISAN &amp; POP-UP HUB</span>
+                </span>
+            </a>
+            <form class="searchbox" method="get" action="/App/Catalog.aspx">
+                <input type="text" name="q" placeholder="Search products, artists, pop-up venues..." />
+                <button type="submit" aria-label="Search"><span class="ms sm">search</span></button>
+            </form>
+            <div class="top-right">
+                <asp:PlaceHolder ID="livePillPh" runat="server" />
+                <span class="currency-chip">PHP (₱)</span>
+                <a class="icon-btn" href="/App/Cart.aspx" title="Cart">
+                    <span class="ms">shopping_bag</span><asp:Literal ID="cartCount" runat="server" />
+                </a>
+                <a class="icon-btn" href="/App/Notifications.aspx" title="Notifications">
+                    <span class="ms">notifications</span><asp:Literal ID="notifCount" runat="server" />
+                </a>
+                <asp:PlaceHolder ID="userPh" runat="server" />
+            </div>
+        </div>
+    </header>
+
+    <asp:PlaceHolder ID="bannerPh" runat="server" />
+
+    <div class="layout">
+        <aside class="sidebar">
+            <asp:Literal ID="navLiteral" runat="server" />
+        </aside>
+        <main class="main">
+            <asp:ContentPlaceHolder ID="MainContent" runat="server" />
+        </main>
+    </div>
+
+    <footer class="foot">
+        <div class="foot-inner">
+            <div>
+                <div style="display:flex;align-items:center;gap:10px">
+                    <img src="/Assets/stardom-logo.PNG" alt="" class="brand-img" style="height:26px" />
+                    <div class="brand-logo" style="font-size:17px">STAR:DOM<span class="brand-dot"></span></div>
+                </div>
+                <span class="pill small yellow" style="margin-top:6px">PH MARKETPLACE</span>
+                <p>The premier Filipino artisan hub connecting independent creators with art lovers through physical convention pop-ups and live commerce.</p>
+                <span style="font-size:11px;letter-spacing:.1em;font-weight:800;color:var(--ink-soft)">MERCHANT INQUIRY HOTLINE</span><br />
+                <b style="font-family:var(--font-mono);color:var(--primary);font-size:14px">+63 (02) 8839-4421</b>
+            </div>
+            <div>
+                <h4>POP-UP TOUR 2026</h4>
+                <ul>
+                    <asp:Literal ID="footerTourLinks" runat="server" />
+                </ul>
+            </div>
+            <div>
+                <h4>PAYMENTS &amp; PLATFORM</h4>
+                <p>Trusted nationwide shipping with cashless checkout.</p>
+                <div class="pay-chips">
+                    <span class="pay-chip">GCash</span>
+                    <span class="pay-chip">Maya</span>
+                    <span class="pay-chip">J&amp;T Express</span>
+                    <span class="pay-chip">LBC Express</span>
+                </div>
+                <ul style="margin-top:14px">
+                    <li><a href="/App/Catalog.aspx">Products Catalog</a></li>
+                    <li><a href="/App/CommissionHub.aspx">Commission Hub</a></li>
+                    <li><a href="/App/Orders.aspx">My Orders / Wishlist</a></li>
+                    <li><a href="/Register.aspx">Open an Account</a></li>
+                </ul>
+            </div>
+            <div>
+                <h4>ARTISAN STUDIO</h4>
+                <p>STAR:DOM is a solo-artist brand — every product is personally handcrafted with love.</p>
+                <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px">
+                    <a class="btn ghost" href="/App/CommissionHub.aspx" style="font-size:12px"><span class="ic ms">brush</span> Commission</a>
+                    <a class="btn ghost" href="/App/Catalog.aspx" style="font-size:12px"><span class="ic ms">inventory_2</span> Full Catalog</a>
+                </div>
+            </div>
+        </div>
+        <div class="foot-bar">© 2026 STAR:DOM Artisan &amp; Pop-up Hub · Atelier Dispatch Engine v4.8 · VB.NET Web Forms &middot; <a href="/App/PopupLocations.aspx" style="font-weight:700">View Tour Map</a></div>
+    </footer>
+    </form>
+
+    <!-- STAR:DOM confirm modal -->
+    <div class="modal-backdrop" id="appModal" aria-hidden="true">
+        <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="appModalTitle" aria-describedby="appModalMsg">
+            <span class="modal-ic ms" id="appModalIcon">help</span>
+            <h3 id="appModalTitle">Are you sure?</h3>
+            <p class="modal-msg" id="appModalMsg"></p>
+            <div class="modal-actions">
+                <button type="button" class="btn ghost" id="appModalCancel">Cancel</button>
+                <button type="button" class="btn primary" id="appModalOK">Confirm</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Page route progress indicator -->
+    <div id="page-progress"></div>
+
+    <script>
+    (function () {
+        // Page transition exit animation & progress bar
+        var bar = document.getElementById('page-progress');
+        document.addEventListener('click', function (e) {
+            var link = e.target && e.target.closest ? e.target.closest('a') : null;
+            if (!link || !link.href) return;
+            if (link.target === '_blank' || link.hasAttribute('download') || link.getAttribute('data-confirm')) return;
+            if (e.ctrlKey || e.metaKey || e.shiftKey || e.altKey || e.button !== 0) return;
+
+            var url;
+            try { url = new URL(link.href, window.location.href); } catch (err) { return; }
+            if (url.origin !== window.location.origin) return;
+            if (url.pathname === window.location.pathname && url.search === window.location.search && url.hash) return;
+            if (link.getAttribute('href').indexOf('javascript:') === 0 || link.getAttribute('href') === '#') return;
+
+            e.preventDefault();
+            if (bar) bar.className = 'loading';
+            document.body.classList.add('page-leaving');
+            setTimeout(function () {
+                window.location.href = link.href;
+            }, 140);
+        });
+
+        window.addEventListener('pageshow', function (e) {
+            document.body.classList.remove('page-leaving');
+            if (bar) {
+                bar.className = 'done';
+                setTimeout(function () { bar.className = ''; }, 300);
+            }
+        });
+
+        // App modal logic
+        var backdrop = document.getElementById('appModal');
+        var card = backdrop.querySelector('.modal-card');
+        var title = document.getElementById('appModalTitle');
+        var okBtn = document.getElementById('appModalOK');
+        var cancelBtn = document.getElementById('appModalCancel');
+        var icon = document.getElementById('appModalIcon');
+        var lastFocus = null;
+        var pending = null;
+
+        function open(text, opts) {
+            opts = opts || {};
+            document.getElementById('appModalMsg').textContent = text;
+            title.textContent = opts.title || 'Are you sure?';
+            okBtn.textContent = opts.okText || 'Confirm';
+            icon.textContent = opts.danger ? 'warning' : 'help';
+            okBtn.className = 'btn ' + (opts.danger ? 'danger' : 'primary');
+            card.className = 'modal-card' + (opts.danger ? ' danger' : '');
+            backdrop.classList.add('open');
+            backdrop.setAttribute('aria-hidden', 'false');
+            cancelBtn.focus();
+        }
+
+        function close() {
+            if (!backdrop.classList.contains('open')) return;
+            backdrop.classList.remove('open');
+            backdrop.setAttribute('aria-hidden', 'true');
+            if (lastFocus) lastFocus.focus();
+        }
+
+        function confirm() {
+            var go = pending;
+            pending = null;
+            close();
+            if (go) go();
+        }
+
+        cancelBtn.addEventListener('click', close);
+        okBtn.addEventListener('click', confirm);
+        backdrop.addEventListener('click', function (e) {
+            if (e.target === backdrop) close();
+        });
+        document.addEventListener('keydown', function (e) {
+            if (!backdrop.classList.contains('open')) return;
+            if (e.key === 'Escape') close();
+            else if (e.key === 'Enter' && !(e.target && e.target.tagName === 'BUTTON')) confirm();
+        });
+
+        document.addEventListener('click', function (e) {
+            var el = e.target && e.target.closest ? e.target.closest('[data-confirm]') : null;
+            if (!el || el.disabled) return;
+            e.preventDefault();
+            lastFocus = el;
+            var msg = el.getAttribute('data-confirm');
+            pending = function () {
+                var tag = el.tagName.toLowerCase();
+                if (tag === 'a') {
+                    if (bar) bar.className = 'loading';
+                    document.body.classList.add('page-leaving');
+                    setTimeout(function() { window.location.href = el.href; }, 140);
+                    return;
+                }
+                var saved = msg;
+                el.removeAttribute('data-confirm');
+                try { el.click(); } finally { if (saved) el.setAttribute('data-confirm', saved); }
+            };
+            open(msg, { danger: el.hasAttribute('data-confirm-danger'), okText: el.getAttribute('data-confirm-ok') });
+        });
+    })();
+    </script>
+</body>
+</html>

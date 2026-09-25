@@ -1,0 +1,21 @@
+-- ============================================================
+-- STAR:DOM — Product artwork wiring (obsolete)
+-- The demo catalog artwork under D:\STARDOM\design\products (and
+-- img/products/*.png) belonged to the removed demo products (SKU-MV/SKU-PF/
+-- SKU-RF/SKU-GC). Those products no longer exist — the catalog now uses the
+-- official 100-item ARTSHOP inventory (see seed_products_artshop.sql).
+--
+-- The 100 Artshop items have no dedicated individual PNG files, so they render
+-- through WebUi.Art (WebUi.vb): deterministic procedural gradient + initials
+-- placeholders when a product has no row in ProductImages.
+--
+-- Keep ProductImages empty on fresh installs (seed_products_artshop.sql
+-- truncates it). This file is kept as documentation and is a deliberate no-op.
+-- ============================================================
+USE stardom;
+
+-- No product image rows are seeded. Artwork is generated procedurally at
+-- render time (WebUi.Art / WebUi.ProductImg) for the 100 Artshop products.
+-- If dedicated artwork is added for an Artshop SKU later, map it here by SKU:
+--   INSERT INTO ProductImages (ProductId, ImageFile, IsPrimary, SortOrder)
+--   SELECT Id, '/img/products/<file>.png', 1, 1 FROM Products WHERE Sku = 'SKU-AS-XXXX';

@@ -1,0 +1,192 @@
+Imports System.Text
+Imports System.Web
+
+Namespace STAR_DOM.Web
+
+    ''' <summary>Shared server-side HTML helpers for the STAR:DOM web UI.</summary>
+    Public Module WebUi
+
+        Public Function Esc(value As Object) As String
+            If value Is Nothing OrElse value Is DBNull.Value Then Return ""
+            Return HttpUtility.HtmlEncode(Convert.ToString(value))
+        End Function
+
+        Public Function Attr(value As Object) As String
+            If value Is Nothing OrElse value Is DBNull.Value Then Return ""
+            Return HttpUtility.HtmlAttributeEncode(Convert.ToString(value))
+        End Function
+
+        Private ReadOnly _palettes As String() = {
+            "#b70011", "#c2410c", "#a16207", "#15803d", "#1d4ed8",
+            "#6d28d9", "#be185d", "#0e7490", "#b45309", "#4d7c0f"
+        }
+
+        ''' <summary>Deterministic placeholder artwork block (gradient + initials) for a product.</summary>
+        Public Function Art(seed As Integer, name As String, Optional style As String = "") As String
+            Dim c1 As String = _palettes(seed Mod _palettes.Length)
+            Dim initials As String = ""
+            Dim parts As String() = Convert.ToString(name).Split(" "c)
+            For i As Integer = 0 To Math.Min(parts.Length - 1, 1)
+                If parts(i).Length > 0 Then initials &= Char.ToUpperInvariant(parts(i)(0))
+            Next
+            If initials = "" Then initials = "SD"
+            Dim sb As New StringBuilder()
+            sb.Append("<div class=""art"" style=""background-image:linear-gradient(135deg," & c1 & ",#1e1b19);" & style & """>")
+            sb.Append("<span>" & Esc(initials) & "</span>")
+            sb.Append("</div>")
+            Return sb.ToString()
+        End Function
+
+        ''' <summary>Real product image block when one is on file, else gradient placeholder art.</summary>
+        Public Function ProductImg(imageFile As Object, seed As Integer, name As String, Optional style As String = "") As String
+            Dim f As String = Convert.ToString(imageFile)
+            If String.IsNullOrWhiteSpace(f) Then Return Art(seed, name, style)
+            Return "<div class=""art"" style=""background-image:url('" & Attr(f) & "');" & style & """></div>"
+        End Function
+
+        Public Function Money(value As Object) As String
+            Return "<span class=""money"">" & Esc(Fmt_PHP(value)) & "</span>"
+        End Function
+
+        Private Function Fmt_PHP(value As Object) As String
+            Dim d As Decimal = 0D
+            If value IsNot Nothing Then
+                Decimal.TryParse(Convert.ToString(value), System.Globalization.NumberStyles.Any,
+                                 System.Globalization.CultureInfo.InvariantCulture, d)
+            End If
+            Return "₱" & d.ToString("N2")
+        End Function
+
+        ''' <summary>Status pill colored per state.</summary>
+        Public Function Badge(status As String) As String
+            Dim s As String = Convert.ToString(status).Trim().ToUpperInvariant()
+            Dim kind As String = "neutral"
+            Select Case s
+                Case "NOW OPEN", "ACTIVE", "ACTIVE TODAY", "APPROVED", "PAID", "DELIVERED",
+                     "COMPLETED", "LIVE", "AVAILABLE", "READY", "SUCCESS"
+                    kind = "live"
+                Case "PENDING", "PENDING REVIEW", "PENDING APPROVAL", "SUBMITTED", "UPCOMING",
+                     "CLARIFICATION REQUESTED", "PAYMENT PENDING", "HIDDEN", "PROCESSING"
+                    kind = "warn"
+                Case "CANCELLED", "DECLINED", "SUSPENDED", "FAILED", "LOW STOCK", "ENDED", "REFUNDED"
+                    kind = "muted"
+            End Select
+            Return "<span class=""badge " & kind & """>" & Esc(status) & "</span>"
+        End Function
+
+        Public Function Stars(rating As Integer) As String
+            rating = Math.Max(0, Math.Min(5, rating))
+            Dim sb As New StringBuilder()
+            For i As Integer = 1 To 5
+                If i <= rating Then sb.Append("★") Else sb.Append("☆")
+            Next
+            Return "<span class=""stars"">" & sb.ToString() & "</span>"
+        End Function
+
+        Public Function Section(title As String, Optional eyebrow As String = "", Optional subText As String = "") As String
+            Dim sb As New StringBuilder()
+            sb.Append("<div class=""sec"">")
+            If eyebrow <> "" Then sb.Append("<div class=""eyebrow"">" & Esc(eyebrow) & "</div>")
+            sb.Append("<h2>" & Esc(title) & "</h2>")
+            If subText <> "" Then sb.Append("<p class=""sub"">" & Esc(subText) & "</p>")
+            sb.Append("</div>")
+            Return sb.ToString()
+        End Function
+
+        Public Function Pill(text As String, Optional kind As String = "yellow") As String
+            Return "<span class=""pill " & kind & """>" & Esc(text) & "</span>"
+        End Function
+
+        ''' <summary>Category/filter chip link.</summary>
+        Public Function OutLink(url As String, text As String, Optional isOn As Boolean = False) As String
+            Return "<a class=""chip""" & If(isOn, " on", "") & " href=""" & Attr(url) & """>" & Esc(text) & "</a>"
+        End Function
+
+        Public Function BtnHref(url As String, text As String, Optional kind As String = "primary", Optional icon As String = "") As String
+            Dim ic As String = ""
+            If icon <> "" Then
+                Dim icCls As String = If(IsGlyph(icon), "ic", "ic ms")
+                ic = "<span class=""" & icCls & """>" & Esc(icon) & "</span>"
+            End If
+            Return "<a class=""btn " & kind & """ href=""" & Attr(url) & """>" & ic & "<span>" & Esc(text) & "</span></a>"
+        End Function
+
+        ''' <summary>
+        ''' Prev/next pager for bounded lists. Pass a URL template containing "{P}" for the page number,
+        ''' e.g. "/App/Merchant/Orders.aspx?p={P}".
+        ''' </summary>
+        Public Function Pager(totalItems As Integer, pageSize As Integer, page As Integer, urlTemplate As String) As String
+            If pageSize <= 0 OrElse totalItems <= 0 Then Return ""
+            Dim totalPages As Integer = CInt(Math.Ceiling(totalItems / pageSize))
+            If totalPages <= 1 Then Return ""
+            If page < 1 Then page = 1
+            If page > totalPages Then page = totalPages
+            Dim prevUrl As String = urlTemplate.Replace("{P}", (page - 1).ToString())
+            Dim nextUrl As String = urlTemplate.Replace("{P}", (page + 1).ToString())
+            Dim sb As New StringBuilder()
+            sb.Append("<div class=""pager"">")
+            If page > 1 Then
+                sb.Append("<a class=""btn ghost"" href=""" & Attr(prevUrl) & """>" & Ic("chevron_left", "sm") & " Newer</a>")
+            End If
+            sb.Append("<span class=""sub"" style=""padding:0 10px"">Page " & page.ToString() & " of " & totalPages.ToString() & " (" &
+                      totalItems.ToString() & " orders)</span>")
+            If page < totalPages Then
+                sb.Append("<a class=""btn ghost"" href=""" & Attr(nextUrl) & """>Older " & Ic("chevron_right", "sm") & "</a>")
+            End If
+            sb.Append("</div>")
+            Return sb.ToString()
+        End Function
+
+        ''' <summary>Material Symbols Outlined icon literal. Size classes: "sm", "lg", "xl", "filled".</summary>
+        Public Function Ic(name As String, Optional cls As String = "") As String
+            Dim extra As String = If(String.IsNullOrWhiteSpace(cls), "", " " & cls.Trim())
+            Return "<span class=""ms" & extra & """>" & Esc(name) & "</span>"
+        End Function
+
+        ''' <summary>Two-channel SVG donut for share analytics (e.g. omnichannel revenue mix).</summary>
+        Public Function Donut(pctA As Double, pctB As Double, centerLabel As String, centerValue As String,
+                              Optional subLabel As String = "", Optional gapRounded As Boolean = True) As String
+            Dim ra As Double = Math.Max(0D, Math.Min(100D, pctA))
+            Dim rb As Double = Math.Max(0D, Math.Min(100D, pctB))
+            If ra + rb > 100D Then rb = Math.Max(0D, 100D - ra)
+            Dim c As Double = 2 * Math.PI * 38
+            Dim lenA As Double = c * ra / 100D
+            Dim lenB As Double = c * rb / 100D
+            Dim cap As String = If(gapRounded, "round", "butt")
+            Dim sb As New StringBuilder()
+            sb.Append("<div class=""donut""><div class=""donut-wrap""><svg viewBox=""0 0 100 100"" aria-hidden=""true"">")
+            sb.Append("<circle cx=""50"" cy=""50"" r=""38"" fill=""none"" stroke=""#f4ece8"" stroke-width=""14""></circle>")
+            sb.Append("<circle cx=""50"" cy=""50"" r=""38"" fill=""none"" stroke=""#b70011"" stroke-width=""14"" stroke-linecap=""" & cap & """ stroke-dasharray=""" & FmtN(lenA) & " " & FmtN(c) & """ stroke-dashoffset=""0""></circle>")
+            sb.Append("<circle cx=""50"" cy=""50"" r=""38"" fill=""none"" stroke=""#fed01b"" stroke-width=""14"" stroke-linecap=""" & cap & """ stroke-dasharray=""" & FmtN(lenB) & " " & FmtN(c) & """ stroke-dashoffset=""" & FmtN(-lenA) & """></circle>")
+            sb.Append("</svg><div class=""donut-center""><span class=""dc-label"">" & Esc(centerLabel) & "</span><span class=""dc-value"">" & Esc(centerValue) & "</span>")
+            If subLabel <> "" Then sb.Append("<span class=""dc-sub"">" & Esc(subLabel) & "</span>")
+            sb.Append("</div></div></div>")
+            Return sb.ToString()
+        End Function
+
+        Private Function FmtN(v As Double) As String
+            Return v.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture)
+        End Function
+
+        ''' <summary>True when the icon string is an emoji/unicode glyph rather than a Material Symbol name.</summary>
+        Private Function IsGlyph(s As String) As Boolean
+            If s = "" Then Return False
+            If s.IndexOf("&#", StringComparison.Ordinal) >= 0 Then Return True
+            For Each ch As Char In s
+                If AscW(ch) > 126 Then Return True
+            Next
+            Return False
+        End Function
+
+        Public Function AlertBox(message As String, Optional kind As String = "err") As String
+            If String.IsNullOrWhiteSpace(message) Then Return ""
+            Return "<div class=""alert " & kind & """>" & Esc(message) & "</div>"
+        End Function
+
+        Public Function EmptyRow(text As String) As String
+            Return "<div class=""empty"">" & Esc(text) & "</div>"
+        End Function
+
+    End Module
+
+End Namespace
