@@ -1,6 +1,5 @@
 # Visual Studio / MSBuild
 .vs/
-[Bb]in/
 [Oo]bj/
 *.user
 *.suo
@@ -19,3 +18,4 @@
 # Packages / output
 packages/
 !STAR-DOM-Web/STAR-DOM-Web/packages/
+!STAR-DOM-Web/STAR-DOM-Web/bin/
